@@ -85,7 +85,7 @@
       const app = new Vue({
         el: "#app",
         data: {
-          lessons: Lessons, // Assumes Lessons is already defined or imported
+          lessons: lessons, // Assumes Lessons is already defined or imported
           cart: [],
           showCart: false,
           sortOption: "",
@@ -117,7 +117,18 @@
             return this.cart.length;
           },
         },
+        created(){
+          this.getLessons();
+        },
         methods: {
+          async getLessons(){
+            var url = "https://coursework2-backend.vercel.app/collection/lessons";
+            var lessons = await fetch(url);
+            lessons = await lessons.json();
+            this.lessons = lessons;
+            console.log("fetched")
+          },
+
           addToCart(lesson) {
             if (lesson.spaces > 0) {
               const item = { ...lesson, spaces: 1 };
