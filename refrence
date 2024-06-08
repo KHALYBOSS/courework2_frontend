@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>After School Programs</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <style>
+    /* Add your custom styles here */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f2f2;
+      color: #333;
+      padding-top: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #007bff;
+    }
+
+    .card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="container">
+    <h1 class="display-6">Idris After School Lessons</h1>
+    <hr class="my-5" />
+
+    <button class="btn btn-primary float-end mb-3" :class="{ 'disabled': cartItems.length === 0 }" @click="toggleCart">
+      Shopping Cart <span>{{ cartItemCount }}</span>
+    </button>
+
+    <div v-if="showCart" class="container">
+      <h2>Shopping Cart</h2>
+      <div class="cart-container">
+        <div class="col-md-6" v-for="item in cartItems" :key="item._id">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div>
+                <i :class="item.icon"></i> {{ item.subject }} - AED{{ item.price }}
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="badge badge-primary badge-pill">{{ item.quantity }}</span>
+                <button @click="removeFromCart(item)" class="btn btn-danger btn-sm">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checkout Functionality -->
+      <div>
+        <h3>Checkout</h3>
+        <form @submit.prevent="checkout">
+          <div class="form-group">
+            <input type="text" v-model="name" class="form-control" placeholder="Name" pattern="^[a-zA-Z\s]+$"
+              required />
+          </div>
+          <div class="form-group">
+            <input type="text" v-model="phone" class="form-control" placeholder="Phone number" pattern="^\d+$"
+              required />
+          </div>
+          <button :disabled="!validForm || cartItems.length === 0" class="btn btn-outline-primary">
+            Checkout
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div v-else class="container">
+      <!-- Search Functionality -->
+      <div class="row">
+        <div class="col-md-6">
+          <input type="text" class="form-control" v-model="searchQuery" placeholder="Search lessons..."
+            @input="getLessons" />
+        </div>
+        <!-- Sort Functionality -->
+        <div class="col-md-6">
+          <select v-model="sortOption" class="form-control" style="width: 350px" @change="getLessons">
+            <option value="">Sort by</option>
+            <option value="subject">Subject</option>
+            <option value="location">Location</option>
+            <option value="price">Price</option>
+            <option value="spaces">Spaces</option>
+          </select>
+          <br />
+          <select v-model="sortOrder" class="form-control" style="width: 350px" @change="getLessons">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+          <br />
+        </div>
+      </div>
+
+      <hr class="my-5" />
+      <!-- Display List of Lessons -->
+      <div class="row">
+        <div class="col-md-4 mt-1 mb-1 shadow" v-for="lesson in filteredLessons" :key="lesson._id">
+          <div class="card">
+            <div class="card-body">
+              <i :class="lesson.icon"></i>
+              <h5>{{ lesson.subject }}</h5>
+              <p>Location: {{ lesson.location }}</p>
+              <p>Price: AED{{ lesson.price }}</p>
+              <p>Spaces: {{ lesson.spaces }}</p>
+              <button :disabled="lesson.spaces === 0" @click="addToCart(lesson)" class="btn btn-primary">Add to
+                Cart</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const app = new Vue({
+      el: "#app",
+      data: {
+        lessons: [],
+        cart: [],
+        showCart: false,
+        sortOption: "",
+        searchQuery: "",
+        sortOrder: "asc",
+        name: "",
+        phone: ""
+      },
+      created() {
+        this.getLessons();
+      },
+      methods: {
+        async getLessons() {
+          const url = new URL('https://backend-ten-inky-80.vercel.app/collection/products');
+          url.searchParams.append('search', this.searchQuery);
+          url.searchParams.append('searchField', 'subject');
+          url.searchParams.append('sort', this.sortOrder);
+
+          const response = await fetch(url);
+          const lessons = await response.json();
+          this.lessons = lessons;
+        },
+        addToCart(lesson) {
+          if (lesson.spaces > 0) {
+            this.$set(this.cart, lesson._id, this.cart[lesson._id] || { ...lesson, quantity: 0 });
+            this.cart[lesson._id].quantity++;
+            lesson.spaces--;
+          }
+        },
+        toggleCart() {
+          this.showCart = !this.showCart;
+        },
+        removeFromCart(item) {
+          if (this.cart[item._id].quantity > 1) {
+            this.cart[item._id].quantity--;
+          } else {
+            this.$delete(this.cart, item._id);
+          }
+          const lesson = this.lessons.find((l) => l._id === item._id);
+          lesson.spaces++;
+        },
+        async checkout() {
+          const order = {
+            lessons: Object.values(this.cart),
+            username: this.name,
+            phonenumber: this.phone
+          };
+
+          try {
+            const response = await fetch('https://backend-ten-inky-80.vercel.app/collection/orders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(order)
+            });
+
+            if (!response.ok) {
+              throw new Error(`Error creating order: ${response.statusText}`);
+            }
+
+            // Update product spaces after order creation
+            for (let item of this.cartItems) {
+              let product = this.lessons.find(product => product._id === item._id);
+              if (product) {
+                product.spaces -= item.quantity;
+
+                try {
+                  const putResponse = await fetch(`https://backend-ten-inky-80.vercel.app/collection/products/${product._id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ spaces: product.spaces }),
+                  });
+
+                  if (!putResponse.ok) {
+                    throw new Error(`Failed to update product ${product._id}: ${putResponse.statusText}`);
+                  }
+                } catch (error) {
+                  console.error(`Error updating product ${product._id}:`, error);
+                }
+              }
+            }
+
+            alert(`Order created successfully for ${this.name} (phone: ${this.phone})!`);
+            this.cart = {};
+            window.location.href = 'Thank you.html';
+          } catch (error) {
+            console.error('Error:', error.message);
+          }
+        }
+      },
+      computed: {
+        cartItems() {
+          return Object.values(this.cart);
+        },
+        filteredLessons() {
+          return this.lessons.filter((lesson) =>
+            lesson.subject.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+            lesson.location.toLowerCase().includes(this.searchQuery.toLowerCase())
+          );
+        },
+        validForm() {
+          return this.name.match(/^[a-zA-Z\s]+$/) && this.phone.match(/^\d+$/);
+        },
+        cartItemCount() {
+          return Object.values(this.cart).reduce((total, item) => total + item.quantity, 0);
+        }
+      },
+      watch: {
+        searchQuery: 'getLessons',  // Watch the search query to trigger search
+        sortOption: 'getLessons',  // Watch the sort option to trigger sorting
+        sortOrder: 'getLessons'  // Watch the sort order to trigger sorting
+      }
+    });
+  </script>
+</body>
+
+</html>
