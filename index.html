@@ -88,6 +88,7 @@
           lessons: [], 
           cart: [],
           showCart: false,
+          showCheckout: false, // Add a new data property for showing/hiding checkout
           sortOption: "",
           searchQuery: "",
           name: "",
@@ -157,53 +158,11 @@
               });
             }
           },
-          async checkout() {
-            const order = {
-              lessons: this.cart,
-              username: this.name,
-              phonenumber: this.phone,
-            };
-            try {
-              const response = await fetch('https://coursework2-backend.vercel.app/collection/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(order),
-              });
-
-              if (!response.ok) {
-                throw new Error(`Error creating order: ${response.statusText}`);
-              }
-
-              // Update lesson spaces after order creation
-              for (let item of this.cart) {
-                let lesson = this.lessons.find(lesson => lesson.id === item.id);
-                if (lesson) {
-                  lesson.spaces -= item.spaces;
-
-                  try {
-                    const putResponse = await fetch(`https://coursework2-backend.vercel.app/collection/lessons/${lesson.id}`, {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ spaces: lesson.spaces }),
-                    });
-
-                    if (!putResponse.ok) {
-                      throw new Error(`Failed to update lesson ${lesson.id}: ${putResponse.statusText}`);
-                    }
-                  } catch (error) {
-                    console.error(`Error updating lesson ${lesson.id}:`, error);
-                  }
-                }
-              }
-
-              alert(`Order Confirmed, ${this.name}!`);
-             // this.cart = [];
-              //this.name = "";
-              //this.phone = "";
-              //window.location.href = 'appreciation.html';
-            } catch (error) {
-              console.error('Error:', error.message);
-            }
+          checkout() {
+            // Implement checkout functionality here
+            // This method will be called when the checkout button is clicked
+            // You can show the checkout section and handle the checkout process here
+            this.showCheckout = true; // Show the checkout section
           }
         },
       });
