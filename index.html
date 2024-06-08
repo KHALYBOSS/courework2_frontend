@@ -85,7 +85,7 @@
       const app = new Vue({
         el: "#app",
         data: {
-          lessons: [], // Assumes Lessons is already defined or imported
+          lessons: [], 
           cart: [],
           showCart: false,
           sortOption: "",
@@ -200,7 +200,7 @@
               this.cart = [];
               this.name = "";
               this.phone = "";
-              window.location.href = 'appreciation.html';
+              //window.location.href = 'appreciation.html';
             } catch (error) {
               console.error('Error:', error.message);
             }
